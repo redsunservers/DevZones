@@ -112,6 +112,8 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	resetClient(client);
+	
+	return Plugin_Continue;
 }
 
 public void OnEntityDestroyed(int entity)
@@ -160,6 +162,8 @@ public void OnClientPostAdminCheck(int client) {
 public Action Event_OnRoundStart(Handle event, const char[] name, bool dontBroadcast) {
 	if (mode_plugin)
 		RefreshZones();
+	
+	return Plugin_Continue;
 }
 
 public int CreateZoneEntity(float fMins[3], float fMaxs[3], char sZoneName[64]) {
@@ -291,10 +295,14 @@ public void OnMapEnd() {
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon) {
 	BeamBox_OnPlayerRunCmd(client);
+	
+	return Plugin_Continue;
 }
 
 public Action Command_CampZones(int client, int args) {
 	ZoneMenu(client);
+	
+	return Plugin_Continue;
 }
 
 public void getZoneTeamColor(int team, int color[4]) {
@@ -431,7 +439,7 @@ public bool TraceRayDontHitSelf(int entity, int mask, any data) {
 }
 
 public Action fnHookSay(int client, int args) {
-	if (!g_bFixName[client])return;
+	if (!g_bFixName[client]) return Plugin_Continue;
 	
 	char sArgs[192];
 	GetCmdArgString(sArgs, sizeof(sArgs));
@@ -444,13 +452,13 @@ public Action fnHookSay(int client, int args) {
 	if (strlen(sArgs) > 45)
 	{
 		PrintToChat(client, "the name is too long, try other name");
-		return;
+		return Plugin_Continue;
 	}
 	if (StrEqual(sArgs, "!cancel"))
 	{
 		PrintToChat(client, "Set name action canceled");
 		EditorMenu(client);
-		return;
+		return Plugin_Continue;
 	}
 	char ZoneId[64];
 	int size = GetArraySize(g_Zones);
@@ -461,7 +469,7 @@ public Action fnHookSay(int client, int args) {
 		if (StrEqual(ZoneId, sArgs))
 		{
 			PrintToChat(client, "The name already exist, write other name");
-			return;
+			return Plugin_Continue;
 		}
 	}
 	
@@ -469,6 +477,8 @@ public Action fnHookSay(int client, int args) {
 	PrintToChat(client, "Zone name set to %s", sArgs);
 	g_bFixName[client] = false;
 	EditorMenu(client);
+	
+	return Plugin_Continue;
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
@@ -604,8 +614,16 @@ public int Native_ZoneExist(Handle plugin, int argc) {
 		for (int i = 0; i < size; ++i)
 		{
 			GetTrieString(GetArrayCell(g_Zones, i), "name", namezone, 64);
-			if (same)if (StrEqual(name, namezone, sensitive))return true;
-			else if (StrContains(name, namezone, sensitive) == 0)return true;
+			if (same)
+			{
+				if (StrEqual(name, namezone, sensitive))
+					return true;
+			}
+			else
+			{
+				if (StrContains(name, namezone, sensitive) != -1)
+					return true;
+			}
 		}
 	}
 	return false;
@@ -938,6 +956,8 @@ public int Handle_ZoneMenu(Handle tMenu, MenuAction action, int client, int item
 			CloseHandle(tMenu);
 		}
 	}
+	
+	return 0;
 }
 
 public void ListZones(int client, MenuHandler handler)
@@ -1199,6 +1219,8 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 			CloseHandle(tMenu);
 		}
 	}
+	
+	return 0;
 }
 
 float g_AvaliableScales[5] =  { 1.0, 5.0, 10.0, 50.0, 100.0 };
@@ -1283,6 +1305,8 @@ public int MenuHandler_Scale(Handle tMenu, MenuAction action, int client, int it
 			CloseHandle(tMenu);
 		}
 	}
+	
+	return 0;
 }
 
 public int MenuHandler_ZoneModify(Handle tMenu, MenuAction action, int client, int item)
@@ -1310,6 +1334,8 @@ public int MenuHandler_ZoneModify(Handle tMenu, MenuAction action, int client, i
 			CloseHandle(tMenu);
 		}
 	}
+	
+	return 0;
 }
 
 public void GetClientSelectedZone(int client, float poses[2][3], int &team, int &vis)
@@ -1359,6 +1385,8 @@ public int MenuHandler_ClearZones(Handle tMenu, MenuAction action, int client, i
 			CloseHandle(tMenu);
 		}
 	}
+	
+	return 0;
 }
 
 
