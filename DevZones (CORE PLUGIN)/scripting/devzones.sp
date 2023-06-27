@@ -616,12 +616,12 @@ public int Native_ZoneExist(Handle plugin, int argc) {
 			GetTrieString(GetArrayCell(g_Zones, i), "name", namezone, 64);
 			if (same)
 			{
-				if (StrEqual(name, namezone, sensitive))
+				if (StrEqual(namezone, name, sensitive))
 					return true;
 			}
 			else
 			{
-				if (StrContains(name, namezone, sensitive) != -1)
+				if (StrContains(namezone, name, sensitive) != -1)
 					return true;
 			}
 		}
