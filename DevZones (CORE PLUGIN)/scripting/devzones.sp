@@ -352,14 +352,9 @@ public void ReadZones() {
 	GetCurrentMap(map, sizeof(map));
 	StringToLowerCase(map);
 	BuildPath(Path_SM, Path, sizeof(Path), "configs/dev_zones/%s.zones.txt", map);
-	if (!FileExists(Path))
-	{
-		//Handle file = OpenFile(Path, "w");
-		//CloseHandle(file);
-		Handle kv = CreateKeyValues("Zones");
-		KeyValuesToFile(kv, Path);
-	}
 	
+	if (!FileExists(Path))
+		return;
 	
 	Handle kv = CreateKeyValues("Zones");
 	FileToKeyValues(kv, Path);
@@ -394,6 +389,22 @@ public void SaveZones(int client) {
 	GetCurrentMap(map, sizeof(map));
 	StringToLowerCase(map);
 	BuildPath(Path_SM, Path, sizeof(Path), "configs/dev_zones/%s.zones.txt", map);
+	
+	int size = GetArraySize(g_Zones);
+	
+	// If there are no zones, just stop here
+	if (!size)
+	{
+		// ...and if a file exists, there is no reason to keep it
+		if (FileExists(Path))
+		{
+			DeleteFile(Path);
+			PrintToServer("[DEVZONES] Deleted %s", Path);
+		}
+		
+		return;
+	}
+	
 	Handle file = OpenFile(Path, "w+");
 	CloseHandle(file);
 	float pos1[3];
@@ -403,7 +414,6 @@ public void SaveZones(int client) {
 	int Vis;
 	char nombre[64];
 	
-	int size = GetArraySize(g_Zones);
 	Handle kv = CreateKeyValues("Zones");
 	for (int i = 0; i < size; ++i)
 	{
