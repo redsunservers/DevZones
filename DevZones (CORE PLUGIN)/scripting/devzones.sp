@@ -777,6 +777,9 @@ public void BeamBox_OnPlayerRunCmd(int client) {
 			GetClientEyeAngles(client, ang);
 			TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
 			TR_GetEndPosition(g_Positions[client][1]);
+			
+			if (GetClientButtons(client) & IN_RELOAD)
+				g_Positions[client][1][2] = pos[2];
 		}
 		if (g_Engine == Engine_Left4Dead || g_Engine == Engine_Left4Dead2)
 		{
@@ -1077,7 +1080,6 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 			{
 				case 0:
 				{
-					
 					// Start
 					g_Editing[client] = 1;
 					float pos[3];
@@ -1087,6 +1089,8 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
 					TR_GetEndPosition(g_Positions[client][0]);
 					EditorMenu(client);
+					
+					PrintToChat(client, "Hold reload to make the zone's height match yours. Sometimes useful for zoning flat areas.");
 				}
 				case 1:
 				{
