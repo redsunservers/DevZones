@@ -84,6 +84,7 @@ native bool Zone_getMostRecentActiveZone(int client, char zoneBuffer[64]);
 
 /**
  * Called when a zone is created.
- * @String zone   Zone name.
+ * @param entity	The trigger's entity index.
+ * @String zone   	Zone name.
  */
-forward void Zone_OnCreated(const char [] zone);
+forward void Zone_OnCreated(int entity, const char [] zone);

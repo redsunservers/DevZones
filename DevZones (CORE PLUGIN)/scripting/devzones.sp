@@ -167,26 +167,25 @@ public Action Event_OnRoundStart(Handle event, const char[] name, bool dontBroad
 }
 
 public int CreateZoneEntity(float fMins[3], float fMaxs[3], char sZoneName[64]) {
-	float fMiddle[3];
 	int iEnt = CreateEntityByName("trigger_multiple");
+	if (iEnt <= 0)
+		return -1;
 	
-	Call_StartForward(hOnZoneCreated);
-	Call_PushString(sZoneName);
-	Call_Finish();
+	char sZoneTargetname[128];
+	Format(sZoneTargetname, sizeof(sZoneTargetname), "sm_devzone %s", sZoneName);
 	
 	DispatchKeyValue(iEnt, "spawnflags", "64");
-	Format(sZoneName, sizeof(sZoneName), "sm_devzone %s", sZoneName);
-	DispatchKeyValue(iEnt, "targetname", sZoneName);
+	DispatchKeyValue(iEnt, "targetname", sZoneTargetname);
 	DispatchKeyValue(iEnt, "wait", "0");
 	
 	DispatchSpawn(iEnt);
 	ActivateEntity(iEnt);
 	
+	float fMiddle[3];
 	GetMiddleOfABox(fMins, fMaxs, fMiddle);
 	
 	TeleportEntity(iEnt, fMiddle, NULL_VECTOR, NULL_VECTOR);
 	SetEntityModel(iEnt, sModel);
-	
 	
 	// Have the mins always be negative
 	fMins[0] = fMins[0] - fMiddle[0];
@@ -220,6 +219,11 @@ public int CreateZoneEntity(float fMins[3], float fMaxs[3], char sZoneName[64]) 
 	
 	HookSingleEntityOutput(iEnt, "OnStartTouch", EntOut_OnStartTouch);
 	HookSingleEntityOutput(iEnt, "OnEndTouch", EntOut_OnEndTouch);
+	
+	Call_StartForward(hOnZoneCreated);
+	Call_PushCell(iEnt);
+	Call_PushString(sZoneName);
+	Call_Finish();
 	
 	return iEnt;
 }
@@ -494,7 +498,7 @@ public Action fnHookSay(int client, int args) {
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	hOnClientEntry = CreateGlobalForward("Zone_OnClientEntry", ET_Ignore, Param_Cell, Param_String);
 	hOnClientLeave = CreateGlobalForward("Zone_OnClientLeave", ET_Ignore, Param_Cell, Param_String);
-	hOnZoneCreated = CreateGlobalForward("Zone_OnCreated", ET_Ignore, Param_String);
+	hOnZoneCreated = CreateGlobalForward("Zone_OnCreated", ET_Ignore, Param_Cell, Param_String);
 	CreateNative("Zone_IsClientInZone", Native_InZone);
 	CreateNative("Zone_GetZonePosition", Native_GetZonePos);
 	CreateNative("Zone_GetZoneCord", Native_GetZoneCord);
