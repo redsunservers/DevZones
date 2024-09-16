@@ -25,6 +25,15 @@
 
 #define MAX_ZONES 256
 
+enum
+{
+	EDITTYPE_LOOK_AT,
+	EDITTYPE_LOOK_AT_MATCH_HEIGHT,
+	EDITTYPE_EYE_POS,
+	
+	EDITTYPE_COUNT
+}
+
 int beamColorT[4] =  { 255, 0, 0, 255 };
 int beamColorCT[4] =  { 0, 0, 255, 255 };
 int beamColorN[4] =  { 255, 255, 0, 255 };
@@ -36,6 +45,8 @@ char g_CurrentZoneName[MAXPLAYERS + 1][64];
 // VARIABLES
 Handle g_Zones = null;
 int g_Editing[MAXPLAYERS + 1] =  { 0, ... };
+int g_EditType[MAXPLAYERS + 1];
+float g_LastEditTypeChangeTime[MAXPLAYERS + 1];
 float g_Positions[MAXPLAYERS + 1][2][3];
 int g_ClientSelectedZone[MAXPLAYERS + 1] =  { -1, ... };
 bool g_bFixName[MAXPLAYERS + 1];
@@ -155,6 +166,8 @@ public void GetCVars() {
 public void OnClientPostAdminCheck(int client) {
 	g_ClientSelectedZone[client] = -1;
 	g_Editing[client] = 0;
+	g_EditType[client] = EDITTYPE_LOOK_AT;
+	g_LastEditTypeChangeTime[client] = 0.0;
 	g_bFixName[client] = false;
 	resetClient(client);
 }
@@ -779,11 +792,50 @@ public void BeamBox_OnPlayerRunCmd(int client) {
 		{
 			GetClientEyePosition(client, pos);
 			GetClientEyeAngles(client, ang);
-			TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
-			TR_GetEndPosition(g_Positions[client][1]);
 			
-			if (GetClientButtons(client) & IN_RELOAD)
-				g_Positions[client][1][2] = pos[2];
+			float gameTime = GetGameTime();
+			
+			if (GetClientButtons(client) & IN_RELOAD && gameTime - g_LastEditTypeChangeTime[client] > 0.5)
+			{
+				if (++g_EditType[client] >= EDITTYPE_COUNT)
+					g_EditType[client] = EDITTYPE_LOOK_AT;
+				
+				g_LastEditTypeChangeTime[client] = gameTime;
+				
+				char mode[128];
+				switch (g_EditType[client])
+				{
+					case EDITTYPE_LOOK_AT: mode = "match your crosshair. Classic.";
+					case EDITTYPE_LOOK_AT_MATCH_HEIGHT: mode = "match your height. Good for zoning open flat areas like platforms.";
+					case EDITTYPE_EYE_POS: mode = "match your eye position. Good for zoning massive areas while not being restricted by brushes.";
+				}
+				
+				PrintToChat(client, "Updated zone editing mode to %s", mode);
+			}
+			
+			switch (g_EditType[client])
+			{
+				case EDITTYPE_LOOK_AT:
+				{
+					TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
+					TR_GetEndPosition(g_Positions[client][1]);
+				}
+				
+				case EDITTYPE_LOOK_AT_MATCH_HEIGHT:
+				{
+					TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
+					TR_GetEndPosition(g_Positions[client][1]);
+					
+					g_Positions[client][1][2] = pos[2];
+				}
+				
+				case EDITTYPE_EYE_POS:
+				{
+					g_Positions[client][1] = pos;
+				}
+					
+			}
+				
 		}
 		if (g_Engine == Engine_Left4Dead || g_Engine == Engine_Left4Dead2)
 		{
@@ -1017,9 +1069,15 @@ public void EditorMenu(int client) {
 		SetMenuTitle(Menu2, "Zone Editor");
 	
 	if (g_Editing[client] == 0)
-		AddMenuItem(Menu2, "", "Start Zone");
+	{
+		AddMenuItem(Menu2, "", "Start Zone from your crosshair");
+		AddMenuItem(Menu2, "", "Start Zone from your eye position");
+	}
 	else
-		AddMenuItem(Menu2, "", "Restart Zone");
+	{
+		AddMenuItem(Menu2, "", "Restart Zone from your crosshair");
+		AddMenuItem(Menu2, "", "Restart Zone from your eye position");
+	}
 	
 	if (g_Editing[client] > 0)
 	{
@@ -1094,15 +1152,27 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					TR_GetEndPosition(g_Positions[client][0]);
 					EditorMenu(client);
 					
-					PrintToChat(client, "Hold reload to make the zone's height match yours. Sometimes useful for zoning flat areas.");
+					PrintToChat(client, "Press reload to change zoning modes.");
 				}
 				case 1:
+				{
+					// Start
+					g_Editing[client] = 1;
+					float pos[3];
+					GetClientEyePosition(client, pos);
+					g_Positions[client][0] = pos;
+					
+					EditorMenu(client);
+					
+					PrintToChat(client, "Press reload to change zoning modes.");
+				}
+				case 2:
 				{
 					PrintToChat(client, "Write in chat the name for the zone\nType !cancel for cancel the operation");
 					g_bFixName[client] = true;
 					//EditorMenu(client);
 				}
-				case 2:
+				case 3:
 				{
 					// Pause
 					if (g_Editing[client] == 2)
@@ -1114,7 +1184,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					}
 					EditorMenu(client);
 				}
-				case 3:
+				case 4:
 				{
 					// Delete
 					if (g_ClientSelectedZone[client] != -1)
@@ -1124,7 +1194,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					ZoneMenu(client);
 					if (mode_plugin)RefreshZones();
 				}
-				case 4:
+				case 5:
 				{
 					
 					// Save
@@ -1158,7 +1228,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					if (mode_plugin)RefreshZones();
 					// Save zone
 				}
-				case 5:
+				case 6:
 				{
 					// Set team
 					++g_CurrentZoneTeam[client];
@@ -1184,7 +1254,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					}
 					EditorMenu(client);
 				}
-				case 6:
+				case 7:
 				{
 					// Teleport
 					float ZonePos[3];
@@ -1196,12 +1266,12 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					EditorMenu(client);
 					PrintToChat(client, "You are teleported to the zone");
 				}
-				case 7:
+				case 8:
 				{
 					// Scaling
 					ScaleMenu(client);
 				}
-				case 8:
+				case 9:
 				{
 					++g_CurrentZoneVis[client];
 					switch (g_CurrentZoneVis[client])
