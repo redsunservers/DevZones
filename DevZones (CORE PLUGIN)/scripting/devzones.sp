@@ -1205,8 +1205,6 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					SetTrieValue(trie, "team", g_CurrentZoneTeam[client]);
 					SetTrieValue(trie, "vis", g_CurrentZoneVis[client]);
 					
-					
-					
 					if (g_ClientSelectedZone[client] != -1)
 					{
 						SetTrieString(trie, "name", g_CurrentZoneName[client]);
@@ -1215,7 +1213,9 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					}
 					else
 					{
-						Format(g_CurrentZoneName[client], 64, "Zone %i", GetArraySize(g_Zones) + 1);
+						if (!g_CurrentZoneName[client][0])
+							Format(g_CurrentZoneName[client], 64, "Zone %d", GetArraySize(g_Zones) + 1);
+						
 						SetTrieString(trie, "name", g_CurrentZoneName[client]);
 						PushArrayCell(g_Zones, trie);
 					}
@@ -1224,6 +1224,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					g_CurrentZoneTeam[client] = 0;
 					g_CurrentZoneVis[client] = 0;
 					g_Editing[client] = 0;
+					g_CurrentZoneName[client] = "";
 					ZoneMenu(client);
 					if (mode_plugin)RefreshZones();
 					// Save zone
