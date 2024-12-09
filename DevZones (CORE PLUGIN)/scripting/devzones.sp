@@ -1324,12 +1324,12 @@ public void ScaleMenu(int client) {
 		AddMenuItem(Menu2, "", "Point B");
 	else
 		AddMenuItem(Menu2, "", "Point A");
-	AddMenuItem(Menu2, "", "+ Width");
-	AddMenuItem(Menu2, "", "- Width");
-	AddMenuItem(Menu2, "", "+ Height");
-	AddMenuItem(Menu2, "", "- Height");
-	AddMenuItem(Menu2, "", "+ Length");
-	AddMenuItem(Menu2, "", "- Length");
+	AddMenuItem(Menu2, "", "+ Width (X)");
+	AddMenuItem(Menu2, "", "- Width (X)");
+	AddMenuItem(Menu2, "", "+ Length (Y)");
+	AddMenuItem(Menu2, "", "- Length (Y)");
+	AddMenuItem(Menu2, "", "+ Height (Z)");
+	AddMenuItem(Menu2, "", "- Height (Z)");
 	char ScaleSize[128];
 	Format(ScaleSize, sizeof(ScaleSize), "Scale Size %f", g_AvaliableScales[g_ClientSelectedScale[client]]);
 	AddMenuItem(Menu2, "", ScaleSize);
